@@ -17,6 +17,7 @@ class CertDependency(Dependency):
         self.path = item.get('path')
 
     def check(self) -> int:
+        print(f"check cert")
         try:
             if check_ssl_cert_file_expiry(self.path):
                 return 1

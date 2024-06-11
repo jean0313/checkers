@@ -9,6 +9,7 @@ class NetworkDependency(Dependency):
         self.port = item.get('port')
 
     def check(self) -> int:
+        print(f"check network")
         try:
             with socket.create_connection((self.host, self.port), timeout=5):
                 print(f"Network check passed for {self.host}:{self.port}")

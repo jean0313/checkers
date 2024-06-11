@@ -3,6 +3,7 @@ from cert import CertDependency
 from database_mysql import MySQLDependency
 from database_pg import PostgreSQLDependency
 from network import NetworkDependency
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import yaml
 
 
@@ -29,12 +30,20 @@ def dependency_factory(item):
 
 def main(yaml_file):
     dependencies = load_dependencies(yaml_file)
-    for item in dependencies:
-        dependency = dependency_factory(item)
-        code = dependency.check()
-        if code != 0:
-            return code
-    return 0
+    results = []
+    # for item in dependencies:
+    #     dependency = dependency_factory(item)
+    #     code = dependency.check()
+    #     if code != 0:
+    #         return code
+    # return 0
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        futures = [executor.submit(dependency_factory(item).check) for item in dependencies]
+        for future in as_completed(futures):
+            results.append(future.result())
+
+    return sum(results)
+
 
 if __name__ == '__main__':
     try:
