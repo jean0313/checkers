@@ -1,4 +1,7 @@
+# -*- encoding: utf-8 -*-
 import sys
+
+import click
 from cert import CertDependency
 from database_mysql import MySQLDependency
 from database_pg import PostgreSQLDependency
@@ -11,7 +14,6 @@ def load_dependencies(yaml_file):
     with open(yaml_file, 'r') as file:
         return yaml.safe_load(file)['dependencies']
 
-# Factory to create dependency objects
 def dependency_factory(item):
     if item['type'] == 'network':
         return NetworkDependency(item)
@@ -28,25 +30,28 @@ def dependency_factory(item):
     else:
         raise ValueError(f"Unknown dependency type: {item['type']}")
 
-def main(yaml_file):
-    dependencies = load_dependencies(yaml_file)
+@click.command()
+@click.option('--file', '-f', default='deps.yaml')
+@click.option('--parallel', '-p', default=False)
+@click.option('--exit_on_error', '-e', default=False)
+def main(file, parallel, exit_on_error):
+    dependencies = load_dependencies(file)
     results = []
-    # for item in dependencies:
-    #     dependency = dependency_factory(item)
-    #     code = dependency.check()
-    #     if code != 0:
-    #         return code
-    # return 0
-    with ThreadPoolExecutor(max_workers=10) as executor:
-        futures = [executor.submit(dependency_factory(item).check) for item in dependencies]
-        for future in as_completed(futures):
-            results.append(future.result())
-
-    return sum(results)
-
+    if parallel:
+        print('executing in parallel mode')
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            futures = [executor.submit(dependency_factory(item).check) for item in dependencies]
+            for future in as_completed(futures):
+                results.append(future.result())
+        sys.exit(sum(results))
+    else:
+        print('executing in sync mode')
+        for item in dependencies:
+            dependency = dependency_factory(item)
+            code = dependency.check()
+            if code != 0 and exit_on_error:
+                sys.exit(code)
+        sys.exit(0)
 
 if __name__ == '__main__':
-    try:
-        sys.exit(main('deps.yaml'))
-    except ValueError:
-        sys.exit(1)
+    main()
