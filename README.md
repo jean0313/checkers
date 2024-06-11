@@ -14,11 +14,20 @@ Options:
 
 ### Run
 ```shell
-# install deps
+# Install deps
 pip install click pyyaml mysql-connector-python psycopg2-binary
 
-# run checkers
+# Run checkers
 python3 checkers.py
+
+# Specify a config
+python3 checkers.py -f dependencies.yaml
+
+# Run in parallel mode
+python3 checkers.py -p true
+
+# Exit on errors
+python3 checkers.py -e true
 ```
 
 
