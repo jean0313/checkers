@@ -31,9 +31,9 @@ def dependency_factory(item):
         raise ValueError(f"Unknown dependency type: {item['type']}")
 
 @click.command()
-@click.option('--file', '-f', default='deps.yaml')
-@click.option('--parallel', '-p', default=False)
-@click.option('--exit_on_error', '-e', default=False)
+@click.option('--file', '-f', default='deps.yaml', help='Config file of checkers', show_default=True)
+@click.option('--parallel', '-p', default=False, help='Execute checkers in parallel', show_default=True)
+@click.option('--exit_on_error', '-e', default=False, help='Exit on error', show_default=True)
 def main(file, parallel, exit_on_error):
     dependencies = load_dependencies(file)
     results = []
