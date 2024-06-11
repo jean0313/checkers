@@ -4,6 +4,7 @@ import psycopg2
 class PostgreSQLDependency(DatabaseDependency):
     def check(self) -> int:
         try:
+            print('-> Check PostgreSQL')
             connection = psycopg2.connect(
                 host=self.host,
                 port=self.port,

@@ -2,8 +2,6 @@ from base import Dependency
 import ssl
 from datetime import datetime
 
-
-
 def check_ssl_cert_file_expiry(cert_file_path: str) -> bool:
     x509 = ssl._ssl._test_decode_cert(cert_file_path)
     expiry_date_str = x509['notAfter']
@@ -17,7 +15,7 @@ class CertDependency(Dependency):
         self.path = item.get('path')
 
     def check(self) -> int:
-        print(f"check cert")
+        print(f"-> Check cert file expiry")
         try:
             if check_ssl_cert_file_expiry(self.path):
                 return 1

@@ -4,6 +4,7 @@ import mysql.connector
 class MySQLDependency(DatabaseDependency):
     def check(self) -> int:
         try:
+            print('-> Check MySQL')
             connection = mysql.connector.connect(
                 host=self.host,
                 port=self.port,
