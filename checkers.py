@@ -63,9 +63,9 @@ def check(file, parallel, exit_on_error):
 
 def get_check_instance(dep):
     check_class = check_registry.get(dep['type'])
-    if check_class:
+    if not check_class:
         if dep['type'] == 'database':
-            db_type = dep.get('db_type')
+            db_type = dep.get('name')
             check_class = check_registry.get(f"{dep['type']}_{db_type}")
     return check_class(**dep)
 

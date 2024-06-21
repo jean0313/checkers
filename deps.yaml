@@ -6,3 +6,10 @@ dependencies:
     path: /Users/jean/work/checkers/domain.crt
   - type: echo
     msg: hi there
+  - type: database
+    name: mysql
+    host: localhost
+    user: root
+    password: sa
+    database: checker_test
+    port: 3306
