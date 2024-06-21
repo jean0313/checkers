@@ -1,57 +1,73 @@
-# -*- encoding: utf-8 -*-
 import sys
-
 import click
-from cert import CertDependency
-from database_mysql import MySQLDependency
-from database_pg import PostgreSQLDependency
-from network import NetworkDependency
-from concurrent.futures import ThreadPoolExecutor, as_completed
 import yaml
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from registry import check_registry
+import checks.network_check  # Ensure all checks are imported
+import checks.cert_check
+import checks.database_mysql_check
+import checks.database_postgre_check
+import checks.echo_check
 
+def load_dependencies(file_path):
+    with open(file_path, 'r') as file:
+        data = yaml.safe_load(file)
+    return data.get('dependencies', [])
 
-def load_dependencies(yaml_file):
-    with open(yaml_file, 'r') as file:
-        return yaml.safe_load(file)['dependencies']
-
-def dependency_factory(item):
-    if item['type'] == 'network':
-        return NetworkDependency(item)
-    elif item['type'] == 'cert':
-        return CertDependency(item)
-    elif item['type'] == 'database':
-        db_name = item.get('name').lower()
-        if db_name == 'mysql':
-            return MySQLDependency(item)
-        elif db_name == 'postgresql':
-            return PostgreSQLDependency(item)
+def check_dependencies(dependencies):
+    results = {}
+    for dep in dependencies:
+        check_class = check_registry.get(dep['type'])
+        if check_class:
+            if dep['type'] == 'database':
+                db_type = dep.get('db_type')
+                check_class = check_registry.get(f"{dep['type']}_{db_type}")
+                description = f"{dep['type'].capitalize()}-{db_type}"
+            else:
+                description = f"{dep['type'].capitalize()}"
+            check_instance = check_class(**dep)
+            status, result = check_instance.check()
+            if status > 0:
+                results[description] = result
         else:
-            raise ValueError(f"Unsupported database type: {item['name']}")
-    else:
-        raise ValueError(f"Unknown dependency type: {item['type']}")
+            results[f"Unknown {dep['type']}"] = "No check available"
+    return results
 
 @click.command()
 @click.option('--file', '-f', default='deps.yaml', help='Config file of checkers', show_default=True)
 @click.option('--parallel', '-p', default=False, help='Execute checkers in parallel', show_default=True)
 @click.option('--exit_on_error', '-e', default=False, help='Exit on error', show_default=True)
-def main(file, parallel, exit_on_error):
-    dependencies = load_dependencies(file)
+def check(file, parallel, exit_on_error):
     results = []
+    dependencies = load_dependencies(file)
     if parallel:
         print('executing in parallel mode')
         with ThreadPoolExecutor(max_workers=10) as executor:
-            futures = [executor.submit(dependency_factory(item).check) for item in dependencies]
+            futures = []
+            for dep in dependencies:
+                check_instance = get_check_instance(dep)
+                futures.append(executor.submit(check_instance.check))
             for future in as_completed(futures):
-                results.append(future.result())
-        sys.exit(sum(results))
+                status, msg = future.result()
+                results.append(status)
     else:
         print('executing in sync mode')
-        for item in dependencies:
-            dependency = dependency_factory(item)
-            code = dependency.check()
-            if code != 0 and exit_on_error:
-                sys.exit(code)
-        sys.exit(0)
+        for dep in dependencies:
+            check_instance = get_check_instance(dep)
+            status, result = check_instance.check()
+            if status > 0 and exit_on_error:
+                sys.exit(1)
+            else:
+                results.append(status)
+    sys.exit(sum(results))
+
+def get_check_instance(dep):
+    check_class = check_registry.get(dep['type'])
+    if check_class:
+        if dep['type'] == 'database':
+            db_type = dep.get('db_type')
+            check_class = check_registry.get(f"{dep['type']}_{db_type}")
+    return check_class(**dep)
 
 if __name__ == '__main__':
-    main()
+    check()

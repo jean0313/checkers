@@ -4,3 +4,5 @@ dependencies:
     port: 12345
   - type: cert
     path: /Users/jean/work/checkers/domain.crt
+  - type: echo
+    msg: hi there
