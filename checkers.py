@@ -7,7 +7,7 @@ import checks.network_check  # Ensure all checks are imported
 import checks.cert_check
 import checks.database_mysql_check
 import checks.database_postgre_check
-import checks.echo_check
+import checks.api_key_check
 
 def load_dependencies(file_path):
     with open(file_path, 'r') as file:
@@ -67,7 +67,11 @@ def get_check_instance(dep):
         if dep['type'] == 'database':
             db_type = dep.get('name')
             check_class = check_registry.get(f"{dep['type']}_{db_type}")
-    return check_class(**dep)
+    
+    if check_class:
+        return check_class(**dep)
+    else:
+        print(f"Checker[{dep}] not found.")
 
 if __name__ == '__main__':
     check()

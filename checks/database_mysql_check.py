@@ -13,6 +13,7 @@ class MySQLCheck(BaseCheck):
         user = self.kwargs.get('user')
         password = self.kwargs.get('password')
 
+        connection = None
         try:
             connection = pymysql.connect(
                 host=host,
@@ -22,8 +23,10 @@ class MySQLCheck(BaseCheck):
                 port=port
             )
             connection.close()
-            print('MySQL connection OK')
-            return 0, 'MySQL Connection OK'
+            return 0, 'MySQL Connection Check PASS'
         except pymysql.MySQLError as e:
-            print(f'MySQL connect error{self.kwargs}, message:{e}')
-            return 1, f'MySQL connect error!{self.kwargs}'
+            print(f'\tCheck MySQL connect FAIL: {e}')
+            return 1, f'Check MySQL connect FAIL!'
+        finally:
+            if connection:
+                connection.close()

@@ -10,13 +10,16 @@ class CertCheck(BaseCheck):
         cert_path = self.kwargs.get('path')
         print(f'-> Check cert: {cert_path}')
         if not os.path.isfile(cert_path):
-            return f"Certificate file {cert_path} does not exist."
+            return 1, f"Cert Check FAIL: Certificate file {cert_path} not found"
         
         try:
             cert = ssl._ssl._test_decode_cert(cert_path)
             expiry_date = datetime.strptime(cert['notAfter'], '%b %d %H:%M:%S %Y %Z')
             now = datetime.utcnow()
             expired = now > expiry_date
-            return 0, f"Expires on {expiry_date} (Expired: {expired})"
+            if not expired:
+                return 0, "Cert Check PASS"
+            return 1, f"Cert Check FAIL: cert expires on {expiry_date}"
         except Exception as e:
-            return 1, f"Failed to check certificate expiry: {e}"
+            print("\tCert Check FAIL")
+            return 1, f"Cert Check FAIL: {e}"

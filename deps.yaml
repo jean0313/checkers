@@ -4,8 +4,6 @@ dependencies:
     port: 12345
   - type: cert
     path: /Users/jean/work/checkers/domain.crt
-  - type: echo
-    msg: hi there
   - type: database
     name: mysql
     host: localhost
@@ -13,3 +11,7 @@ dependencies:
     password: sa
     database: checker_test
     port: 3306
+  - type: api_key
+    url: http://localhost:8080/hi
+    key: xxx
+    method: get

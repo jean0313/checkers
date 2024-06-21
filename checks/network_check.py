@@ -12,5 +12,5 @@ class NetworkCheck(BaseCheck):
             with socket.create_connection((host, port), timeout=5) as sock:
                 return 0, "Connected"
         except (socket.timeout, ConnectionRefusedError, socket.gaierror, OSError):
-            print(f'Not Connected for {host}:{port}')
+            print(f'\tNetwork Check FAIL: {host}:{port}')
             return 1, "Not Connected"
